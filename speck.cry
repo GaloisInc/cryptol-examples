@@ -1,0 +1,116 @@
+/* Cryptol specification of the Speck block cipher
+ * Author: David Lazar
+ */
+
+///////////////////////////////////////////////////////////////////////
+// parameters
+///////////////////////////////////////////////////////////////////////
+
+Speck32_64    = encrypt `{n=16,m=4,T=22};
+Speck48_72    = encrypt `{n=24,m=3,T=22};
+Speck48_96    = encrypt `{n=24,m=4,T=23};
+Speck64_96    = encrypt `{n=32,m=3,T=26};
+Speck64_128   = encrypt `{n=32,m=4,T=27};
+Speck96_96    = encrypt `{n=48,m=2,T=28};
+Speck96_144   = encrypt `{n=48,m=3,T=29};
+Speck128_128  = encrypt `{n=64,m=2,T=32};
+Speck128_192  = encrypt `{n=64,m=3,T=33};
+Speck128_256  = encrypt `{n=64,m=4,T=34};
+
+Speck32_64'   = decrypt `{n=16,m=4,T=22};
+Speck48_72'   = decrypt `{n=24,m=3,T=22};
+Speck48_96'   = decrypt `{n=24,m=4,T=23};
+Speck64_96'   = decrypt `{n=32,m=3,T=26};
+Speck64_128'  = decrypt `{n=32,m=4,T=27};
+Speck96_96'   = decrypt `{n=48,m=2,T=28};
+Speck96_144'  = decrypt `{n=48,m=3,T=29};
+Speck128_128' = decrypt `{n=64,m=2,T=32};
+Speck128_192' = decrypt `{n=64,m=3,T=33};
+Speck128_256' = decrypt `{n=64,m=4,T=34};
+
+// check only a few of them for now
+theorem correctSpeck32_64: {k p}. Speck32_64' k (Speck32_64 k p) == p;
+theorem correctSpeck64_96: {k p}. Speck64_96' k (Speck64_96 k p) == p;
+theorem correctSpeck96_144: {k p}. Speck96_144' k (Speck96_144 k p) == p;
+theorem correctSpeck128_128: {k p}. Speck128_128' k (Speck128_128 k p) == p;
+theorem correctSpeck128_256: {k p}. Speck128_256' k (Speck128_256 k p) == p;
+
+
+///////////////////////////////////////////////////////////////////////
+// round function
+///////////////////////////////////////////////////////////////////////
+
+R : {n} (fin n) => [n] -> ([n], [n]) -> ([n], [n]);
+R k (x, y) = f2 (f1 k (x, y));
+
+R' : {n} (fin n) => [n] -> ([n], [n]) -> ([n], [n]);
+R' k (x, y) = (((x ^ k) - z) <<< (if `n == 16 then 7 else 8), z)
+  where z = (x ^ y) >>> (if `n == 16 then 2 else 3);
+
+f1 : {n} (fin n) => [n] -> ([n], [n]) -> ([n], [n]);
+f1 k (x, y) = (y, (x >>> (if `n == 16 then 7 else 8) + y) ^ k);
+
+f2 : {n} (fin n) => ([n], [n]) -> ([n], [n]);
+f2 (x, y) = (y, x <<< (if `n == 16 then 2 else 3) ^ y);
+
+
+///////////////////////////////////////////////////////////////////////
+// encryption / decryption
+///////////////////////////////////////////////////////////////////////
+
+encrypt : {n m T} 
+    ( fin n, fin m, fin T
+    , m >= 2, T >= 2, n >= width T
+    ) => [m][n] -> ([n], [n]) -> ([n], [n]);
+encrypt k0 p0 = ps ! 0
+  where {
+    ps = [p0] # [| R k p || p <- ps || k <- ks |];
+    ks = expandKey `{n=n,m=m,T=T} (reverse k0);
+  };
+
+
+decrypt : {n m T} 
+    ( fin n, fin m, fin T
+    , m >= 2, T >= 2, n >= width T
+    ) => [m][n] -> ([n], [n]) -> ([n], [n]);
+decrypt k0 p0 = ps ! 0
+  where {
+    ps = [p0] # [| R' k p || p <- ps || k <- reverse ks |];
+    ks = expandKey `{n=n,m=m,T=T} (reverse k0);
+  };
+
+
+///////////////////////////////////////////////////////////////////////
+// key expansion
+///////////////////////////////////////////////////////////////////////
+
+expandKey : {n m T}
+    ( fin n, fin m, fin T
+    , m >= 2, n >= 2, T >= 2, n >= width T
+    ) => [m][n] -> [T][n];
+expandKey K = ks
+  where {
+    ls = drop(1, K) # [| snd (f1 i (l, k)) || l <- ls || k <- ks || i <- [0 .. `T - 2] |];
+    ks = take(1, K) # [| snd (f2 (k, l)) || l <- drop(`m - 1, ls) || k <- ks |];
+    snd (x, y) = y;
+  };
+
+
+///////////////////////////////////////////////////////////////////////
+// tests
+///////////////////////////////////////////////////////////////////////
+
+theorem testsPass: tests == ~zero;
+
+tests = [t01 t02 t03 t04 t05 t06 t07 t08 t09];
+
+t00 = Speck32_64   [0x1918 0x1110 0x0908 0x0100] (0x6574, 0x694c) == (0xa868, 0x42f2);
+t01 = Speck48_72   [0x121110 0x0a0908 0x020100] (0x20796c, 0x6c6172) == (0xc049a5, 0x385adc);
+t02 = Speck48_96   [0x1a1918 0x121110 0x0a0908 0x020100] (0x6d2073, 0x696874) == (0x735e10, 0xb6445d);
+t03 = Speck64_96   [0x13121110 0x0b0a0908 0x03020100] (0x74614620, 0x736e6165) == (0x9f7952ec, 0x4175946c);
+t04 = Speck64_128  [0x1b1a1918 0x13121110 0x0b0a0908 0x03020100] (0x3b726574, 0x7475432d) == (0x8c6fa548, 0x454e028b);
+t05 = Speck96_96   [0x0d0c0b0a0908 0x050403020100] (0x65776f68202c, 0x656761737520) == (0x9e4d09ab7178, 0x62bdde8f79aa);
+t06 = Speck96_144  [0x151413121110 0x0d0c0b0a0908 0x050403020100] (0x656d6974206e, 0x69202c726576) == (0x2bf31072228a, 0x7ae440252ee6);
+t07 = Speck128_128 [0x0f0e0d0c0b0a0908 0x0706050403020100] (0x6c61766975716520, 0x7469206564616d20) == (0xa65d985179783265, 0x7860fedf5c570d18);
+t08 = Speck128_192 [0x1716151413121110 0x0f0e0d0c0b0a0908 0x0706050403020100] (0x7261482066656968, 0x43206f7420746e65) == (0x1be4cf3a13135566, 0xf9bc185de03c1886);
+t09 = Speck128_256 [0x1f1e1d1c1b1a1918 0x1716151413121110 0x0f0e0d0c0b0a0908 0x0706050403020100] (0x65736f6874206e49, 0x202e72656e6f6f70) == (0x4109010405c0f53e, 0x4eeeb48d9c188f43);
