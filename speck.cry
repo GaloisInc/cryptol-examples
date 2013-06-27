@@ -46,7 +46,6 @@ theorem uniqueExpandSpeck128_128: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=2,
 theorem uniqueExpandSpeck128_192: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=3,T=33} k1 != expandKey `{n=64,m=3,T=33} k2);
 theorem uniqueExpandSpeck128_256: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=4,T=34} k1 != expandKey `{n=64,m=4,T=34} k2);
 
-// To prove weak keys we'll need sKizzo and a recent build of cryptol
 // :prove exists (\k1 -> exists (\k2 -> forall (\x -> Speck32_64 k1 (Speck32_64 k2 x) != x)))
 
 
