@@ -35,6 +35,20 @@ theorem correctSpeck96_144: {k p}. Speck96_144' k (Speck96_144 k p) == p;
 theorem correctSpeck128_128: {k p}. Speck128_128' k (Speck128_128 k p) == p;
 theorem correctSpeck128_256: {k p}. Speck128_256' k (Speck128_256 k p) == p;
 
+theorem uniqueExpandSpeck32_64:   { k1 k2 }. (k1 == k2) | (expandKey `{n=16,m=4,T=22} k1 != expandKey `{n=16,m=4,T=22} k2);
+theorem uniqueExpandSpeck48_72:   { k1 k2 }. (k1 == k2) | (expandKey `{n=24,m=3,T=22} k1 != expandKey `{n=24,m=3,T=22} k2);
+theorem uniqueExpandSpeck48_96:   { k1 k2 }. (k1 == k2) | (expandKey `{n=24,m=4,T=23} k1 != expandKey `{n=24,m=4,T=23} k2);
+theorem uniqueExpandSpeck64_96:   { k1 k2 }. (k1 == k2) | (expandKey `{n=32,m=3,T=26} k1 != expandKey `{n=32,m=3,T=26} k2);
+theorem uniqueExpandSpeck64_128:  { k1 k2 }. (k1 == k2) | (expandKey `{n=32,m=4,T=27} k1 != expandKey `{n=32,m=4,T=27} k2);
+theorem uniqueExpandSpeck96_96:   { k1 k2 }. (k1 == k2) | (expandKey `{n=48,m=2,T=28} k1 != expandKey `{n=48,m=2,T=28} k2);
+theorem uniqueExpandSpeck96_144:  { k1 k2 }. (k1 == k2) | (expandKey `{n=48,m=3,T=29} k1 != expandKey `{n=48,m=3,T=29} k2);
+theorem uniqueExpandSpeck128_128: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=2,T=32} k1 != expandKey `{n=64,m=2,T=32} k2);
+theorem uniqueExpandSpeck128_192: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=3,T=33} k1 != expandKey `{n=64,m=3,T=33} k2);
+theorem uniqueExpandSpeck128_256: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=4,T=34} k1 != expandKey `{n=64,m=4,T=34} k2);
+
+// To prove weak keys we'll need sKizzo and a recent build of cryptol
+// :prove exists (\k1 -> exists (\k2 -> forall (\x -> Speck32_64 k1 (Speck32_64 k2 x) != x)))
+
 
 ///////////////////////////////////////////////////////////////////////
 // round function
@@ -94,6 +108,7 @@ expandKey K = ks
     ks = take(1, K) # [| snd (f2 (k, l)) || l <- drop(`m - 1, ls) || k <- ks |];
     snd (x, y) = y;
   };
+
 
 
 ///////////////////////////////////////////////////////////////////////

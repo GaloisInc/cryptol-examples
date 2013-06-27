@@ -35,6 +35,20 @@ theorem correctSimon96_144: {k p}. Simon96_144' k (Simon96_144 k p) == p;
 theorem correctSimon128_128: {k p}. Simon128_128' k (Simon128_128 k p) == p;
 theorem correctSimon128_256: {k p}. Simon128_256' k (Simon128_256 k p) == p;
 
+theorem uniqueExpandSimon32_64: { k1 k2 }. (k1 == k2) | (expandKey `{n=16,m=4,T=32,j=0} k1 != expandKey `{n=16,m=4,T=32,j=0} k2);
+theorem uniqueExpandSimon48_72: { k1 k2 }. (k1 == k2) | (expandKey `{n=24,m=3,T=36,j=0} k1 != expandKey `{n=24,m=3,T=36,j=0} k2);
+theorem uniqueExpandSimon48_96: { k1 k2 }. (k1 == k2) | (expandKey `{n=24,m=4,T=36,j=1} k1 != expandKey `{n=24,m=4,T=36,j=1} k2);
+theorem uniqueExpandSimon64_96: { k1 k2 }. (k1 == k2) | (expandKey `{n=32,m=3,T=42,j=2} k1 != expandKey `{n=32,m=3,T=42,j=2} k2);
+theorem uniqueExpandSimon64_128: { k1 k2 }. (k1 == k2) | (expandKey `{n=32,m=4,T=44,j=3} k1 != expandKey `{n=32,m=4,T=44,j=3} k2);
+theorem uniqueExpandSimon96_96: { k1 k2 }. (k1 == k2) | (expandKey `{n=48,m=2,T=52,j=2} k1 != expandKey `{n=48,m=2,T=52,j=2} k2);
+theorem uniqueExpandSimon96_144: { k1 k2 }. (k1 == k2) | (expandKey `{n=48,m=3,T=54,j=3} k1 != expandKey `{n=48,m=3,T=54,j=3} k2);
+theorem uniqueExpandSimon128_128: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=2,T=68,j=2} k1 != expandKey `{n=64,m=2,T=68,j=2} k2);
+theorem uniqueExpandSimon128_192: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=3,T=69,j=3} k1 != expandKey `{n=64,m=3,T=69,j=3} k2);
+theorem uniqueExpandSimon128_256: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=4,T=72,j=4} k1 != expandKey `{n=64,m=4,T=72,j=4} k2);
+
+// A weak key theorem would look something like:
+// :prove exists (\k1 -> exists (\k2 -> forall (\x -> Simon32_64 k1 (Simon32_64 k2 x) != x)))
+
 
 ///////////////////////////////////////////////////////////////////////
 // round function
