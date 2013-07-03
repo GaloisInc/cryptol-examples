@@ -29,11 +29,11 @@ Simon128_192' = decrypt `{n=64,m=3,T=69,j=3};
 Simon128_256' = decrypt `{n=64,m=4,T=72,j=4};
 
 // check only a few of them for now
-theorem correctSimon32_64: {k p}. Simon32_64' k (Simon32_64 k p) == p;
-theorem correctSimon64_96: {k p}. Simon64_96' k (Simon64_96 k p) == p;
-theorem correctSimon96_144: {k p}. Simon96_144' k (Simon96_144 k p) == p;
-theorem correctSimon128_128: {k p}. Simon128_128' k (Simon128_128 k p) == p;
-theorem correctSimon128_256: {k p}. Simon128_256' k (Simon128_256 k p) == p;
+theorem correctSimon32_64: {k b}. Simon32_64' k (Simon32_64 k b) == b;
+theorem correctSimon64_96: {k b}. Simon64_96' k (Simon64_96 k b) == b;
+theorem correctSimon96_144: {k b}. Simon96_144' k (Simon96_144 k b) == b;
+theorem correctSimon128_128: {k b}. Simon128_128' k (Simon128_128 k b) == b;
+theorem correctSimon128_256: {k b}. Simon128_256' k (Simon128_256 k b) == b;
 
 theorem uniqueExpandSimon32_64: { k1 k2 }. (k1 == k2) | (expandKey `{n=16,m=4,T=32,j=0} k1 != expandKey `{n=16,m=4,T=32,j=0} k2);
 theorem uniqueExpandSimon48_72: { k1 k2 }. (k1 == k2) | (expandKey `{n=24,m=3,T=36,j=0} k1 != expandKey `{n=24,m=3,T=36,j=0} k2);
@@ -54,8 +54,6 @@ theorem uniqueExpandSimon128_256: { k1 k2 }. (k1 == k2) | (expandKey `{n=64,m=4,
 // round function
 ///////////////////////////////////////////////////////////////////////
 
-type RoundFunction = [n] -> ([n], [n]) -> ([n], [n]);
-
 R k (x, y) = (y ^ f x ^ k, x);
 
 // inverse
@@ -68,28 +66,26 @@ f x = ((x <<< 1) & (x <<< 8)) ^ (x <<< 2);
 // encryption / decryption
 ///////////////////////////////////////////////////////////////////////
 
-skeleton : {n m T j}
+encrypt : {n m T j}
     ( fin n, fin m, fin T, fin j
     , n >= 2, 4 >= m, T >= 4
-    ) => RoundFunction -> ([T][n] -> [T][n]) -> [m][n] -> ([n], [n]) -> ([n], [n]);
-skeleton RF kF k0 p0 = ps ! 0
+    ) => [m][n] -> ([n], [n]) -> ([n], [n]);
+encrypt k0 b0 = bs ! 0
   where {
-    ps = [p0] # [| RF k p || p <- ps || k <- kF ks |];
+    bs = [b0] # [| R k b || b <- bs || k <- ks |];
     ks = expandKey `{n=n,m=m,T=T,j=j} (reverse k0);
   };
 
-encrypt : {n m T j} 
+
+decrypt : {n m T j}
     ( fin n, fin m, fin T, fin j
     , n >= 2, 4 >= m, T >= 4
     ) => [m][n] -> ([n], [n]) -> ([n], [n]);
-encrypt = skeleton `{n=n,m=m,T=T,j=j} R (\x -> x);
-
-
-decrypt : {n m T j} 
-    ( fin n, fin m, fin T, fin j
-    , n >= 2, 4 >= m, T >= 4
-    ) => [m][n] -> ([n], [n]) -> ([n], [n]);
-decrypt = skeleton `{n=n,m=m,T=T,j=j} R' reverse;
+decrypt k0 b0 = bs ! 0
+  where {
+    bs = [b0] # [| R' k b || b <- bs || k <- reverse ks |];
+    ks = expandKey `{n=n,m=m,T=T,j=j} (reverse k0);
+  };
 
 
 ///////////////////////////////////////////////////////////////////////
@@ -116,10 +112,10 @@ expandKey k0 = k
 Z = [ [ 1 1 1 1 1 0 1 0 0 0 1 0 0 1 0 1 0 1 1 0 0 0 0 1 1 1 0 0 1 1 0
         1 1 1 1 1 0 1 0 0 0 1 0 0 1 0 1 0 1 1 0 0 0 0 1 1 1 0 0 1 1 0
       ]
-      [ 1 0 0 0 1 1 1 0 1 1 1 1 1 0 0 1 0 0 1 1 0 0 0 0 1 0 1 1 0 1 0 
+      [ 1 0 0 0 1 1 1 0 1 1 1 1 1 0 0 1 0 0 1 1 0 0 0 0 1 0 1 1 0 1 0
         1 0 0 0 1 1 1 0 1 1 1 1 1 0 0 1 0 0 1 1 0 0 0 0 1 0 1 1 0 1 0
       ]
-      [ 1 0 1 0 1 1 1 1 0 1 1 1 0 0 0 0 0 0 1 1 0 1 0 0 1 0 0 1 1 0 0 
+      [ 1 0 1 0 1 1 1 1 0 1 1 1 0 0 0 0 0 0 1 1 0 1 0 0 1 0 0 1 1 0 0
         0 1 0 1 0 0 0 0 1 0 0 0 1 1 1 1 1 1 0 0 1 0 1 1 0 1 1 0 0 1 1
       ]
       [ 1 1 0 1 1 0 1 1 1 0 1 0 1 1 0 0 0 1 1 0 0 1 0 1 1 1 1 0 0 0 0
